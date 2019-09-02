@@ -58,7 +58,7 @@ class Animate:
         #wheels
         self.wheel_speed_plot = self.orbit_fig.add_subplot(4,4,16)
         self.wheel_speed_plot.set_ylabel('Wheel Speeds (rpm)', rotation='horizontal')
-        self.wheel_speed_plot.yaxis.set_label_coords(1.1,1.1)
+        self.wheel_speed_plot.yaxis.set_label_coords(0.7,1.1)
         self.wheel_speed_plot.yaxis.tick_right()
         self.wheel_speed_plot.set_xlabel('Time (s)', x=0.55)
         self.wheel_speed_plot.grid(True,'major','y')
