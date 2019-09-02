@@ -9,4 +9,5 @@ To use the program:
   - The top left animation shows the torque vector created by the wheels within the CubeSat, these are what turn the CubeSat in space
   - The top right plot shows the absolute error from where the CubeSat is currently pointing to the target
   - The bottom right plot shows the directed speeds of the three perpendicular wheels acting within the CubeSat
-  At any point, double click to replace the position of the target
+  
+At any point, double click to replace the position of the target
