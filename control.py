@@ -36,7 +36,7 @@ class Controller:
                          [-rx*rz, -ry*rz, rx**2+ry**2]])
     def calc_q_move(self):
         sat2vol = self.vol_pos
-        sat2vol /= np.linalg.norm(sat2vol) #normalise
+        #sat2vol /= np.linalg.norm(sat2vol) #normalise
         #print('sat2vol = ',sat2vol)
         #print('co sat2vol = ',sat2vol)
         rotated_z = self.q_cur.rotate(np.array([0,0,1]))

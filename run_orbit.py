@@ -56,8 +56,8 @@ att_update = 0.01
 time_sf = 10
 w0 = [0,0,0]
 q0 = [1,0,0,0]
-rate = 20 #frames/calculations per second
+rate = 10 #frames/calculations per second
 controller = Controller(rate, body_params, q0=[1,0,0,0], w0=[0,0,0])
 anim_obj = Animate(controller, time_sf, real=False)
-my_anim = anim_obj.make_animation()
-plt.show()
+#my_anim = anim_obj.make_animation()
+#plt.show()

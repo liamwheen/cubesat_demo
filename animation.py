@@ -14,27 +14,27 @@ from control import Controller
 class Animate:
 
     def __init__(self, controller, time_sf, real=False):
-
+        
+        self.first_time = True
         self.controller = controller
         self.rate = controller.rate
         self.time_sf = time_sf
         self.iter = 0
-        rescale = 100
-        self.earth_rad = 6371/rescale #km
         self.earth_rad = 1
         self.sat_pos = [0,0,0]
         self.sat_scale = 0.03#60/rescale
         self.vertices = self.sat_scale*np.reshape(np.mgrid[-1:2:2,-1:2:2,-3:4:6].T, (8,3))
         self.centre_vertices = self.vertices
         self.sat_axes = self.sat_scale*np.diag([2,2,6])
+        self.sat_axes = self.sat_scale*np.array([0,0,30])
         self.centre_sat_axes = self.sat_axes
-        self.orbit_fig = plt.figure(figsize=(8,8), dpi=80)
+        self.orbit_fig = plt.figure(figsize=(6,6))
         self.orbit_ax = p3.Axes3D(self.orbit_fig)
         self.orbit_ax.set_xlim3d([-1,1])
         self.orbit_ax.set_ylim3d([-1,1])
         self.orbit_ax.set_zlim3d([-1,1])
         
-        self.bod_ax = self.orbit_fig.add_subplot(331,projection='3d')
+        self.bod_ax = self.orbit_fig.add_subplot(221,projection='3d')
         for item in [self.orbit_fig, self.bod_ax]:
             item.patch.set_visible(False)
         self.bod_plot, = self.bod_ax.plot([],[])
@@ -65,10 +65,10 @@ class Animate:
         self.wheel1, self.wheel2, self.wheel3 = self.wheel_speed_plot.plot([],[],[],[],[],[],alpha=0.8)
         
         #view
-        self.elev = 10#10
-        self.azim = 10#volcano[1]+10
-        self.orbit_ax.view_init(self.elev, self.azim)
-        self.bod_ax.view_init(self.elev, self.azim)
+        elev = 0#10
+        azim = 0#volcano[1]+10
+        self.orbit_ax.view_init(elev, azim)
+        self.bod_ax.view_init(elev, azim)
         self.q = self.controller.q_cur
         self.sat_trace = self.sat_pos
         self.orientate()
@@ -79,7 +79,6 @@ class Animate:
         self.init_fig()
         self.tau = np.array([0,0,0])
         self.set_all_data()
-        
         if real:
             bm = PIL.Image.open('earth.jpg')
             bm = np.array(bm.resize([int(d) for d in bm.size]))/256.
@@ -97,32 +96,10 @@ class Animate:
             self.orbit_ax.plot_wireframe(x, y, z, rstride=10, cstride=10,
                     alpha=0.5, linewidth=1)
         
-        inv_ax = self.orbit_fig.add_subplot(111)
-        inv_ax.set_ylim([-0.655,0.595])
-        inv_ax.set_xlim([-0.633,0.63])
-        #inv_ax.patch.set_visible(False)
-        inv_ax.axis('off')
-        y, z = self.orbit_fig.ginput(1)[0]
-        y/=0.44
-        z/=0.44
-        hyp = (y**2+z**2)**0.5
-        x = (1-hyp**2)**0.5
-        lat = np.arcsin(z)*180/np.pi+self.elev
-        lon = np.arctan2(y, x)*180/np.pi+self.azim
-        click_euc = self.latlon2euc((lat,lon), 1)
-        inv_ax.remove()
-        
-        for i in range(3):
-            self.artists.sat_axes_plot[i].remove()
-        for count in range(12):
-            self.artists.edges_plot[count].remove()
-            self.artists.bod_edges_plot[count].remove()
-        self.artists.verts_plot.remove()
+        self.vol_plot = self.orbit_ax.plot([],[],[],'ko', alpha=0.7)[0]
+        connection_id = self.orbit_fig.canvas.mpl_connect('button_press_event', self.onclick)
+        plt.show()
 
-        self.volcano_pos = click_euc
-        self.controller.set_vol_pos(click_euc)
-        self.orbit_ax.plot([click_euc[0]],[click_euc[1]],[click_euc[2]],'ko', alpha=0.7)
-       
     def latlon2euc(self, latlon, alt):
         lat,lon = latlon
         lat *= np.pi/180
@@ -138,13 +115,13 @@ class Animate:
         Artists = namedtuple("Artists",
                 ("sat_axes_plot","edges_plot","sat_trace_plot",
                     "tau_plot", "bod_edges_plot","verts_plot"))
-        self.artists = Artists([self.orbit_ax.plot([],[],[],'k')[0] for i in range(3)],
+        self.artists = Artists([self.orbit_ax.plot([],[],[],'k')[0] for i in range(1)],
                                [self.orbit_ax.plot([],[],[], lw=1, color='firebrick', alpha=0.7)[0] for i in range(12)],
                                self.orbit_ax.plot([],[],[],'m', alpha=0.5)[0],
-                               self.bod_ax.plot([],[],[],'b')[0],
+                               self.bod_ax.plot([],[],[],'b', lw=2)[0],
                                [self.bod_ax.plot([],[],[],'g-', lw=2)[0] for i in range(12)],
                                self.bod_ax.plot([],[],[],'bo',markersize=3)[0])
-        
+
         self.orbit_ax.set_xticklabels([''])
         self.orbit_ax.set_yticklabels([''])
         self.orbit_ax.set_zticklabels([''])
@@ -172,12 +149,46 @@ class Animate:
             self.centre_vertices])
         self.sat_vertices = self.vertices
         self.sat_axes = np.array([self.q.rotate(v).tolist() for v in
-            self.centre_sat_axes])
-    
+            [self.centre_sat_axes]])
+
+    def onclick(self, event):
+        #self.orbit_fig.set_dpi(100)
+        ymean = 823/1600
+        zmean = 818/1600
+        yscale = 433/1600
+        zscale = 434/1600
+        width, height = self.orbit_fig.get_size_inches()
+        width*=self.orbit_fig.dpi
+        height*=self.orbit_fig.dpi
+        if event.dblclick:
+            y, z = event.x, event.y
+            y = (y-ymean*width)/(yscale*width)
+            z = (z-zmean*height)/(zscale*height)
+            hyp = (y**2+z**2)**0.5
+            if hyp <= 1:
+                x = (1-hyp**2)**0.5
+                lat = np.arcsin(z)*180/np.pi+self.orbit_ax.elev
+                lon = np.arctan2(y, x)*180/np.pi+self.orbit_ax.azim
+                self.click_euc = self.latlon2euc((lat,lon),1)
+                self.volcano_pos = self.click_euc
+                self.controller.set_vol_pos(self.click_euc)
+                self.vol_plot.set_data([self.volcano_pos[0]],[self.volcano_pos[1]])
+                self.vol_plot.set_3d_properties([self.volcano_pos[2]])
+            if self.first_time: 
+                for i in range(1):
+                    self.artists.sat_axes_plot[i].remove()
+                for count in range(12):
+                    self.artists.edges_plot[count].remove()
+                    self.artists.bod_edges_plot[count].remove()
+                self.artists.verts_plot.remove()
+                self.first_time = False
+                self.make_animation()
+
     def frame_iter(self):
         while True:
+            connection_id = self.orbit_fig.canvas.mpl_connect('button_press_event', self.onclick)
             self.q  = self.controller.update()
-            self.tau = self.controller.torq*5000*self.sat_scale
+            self.tau = self.controller.torq*12000*self.sat_scale
             ang_err = 0.5*(self.calc_angle_err()+self.controller.q_move.angle)
             self.err_vals += [ang_err]
             ang_err = self.controller.q_move.angle
@@ -188,7 +199,7 @@ class Animate:
         return
     
     def set_all_data(self):
-        for i in range(3):
+        for i in range(1):
             self.artists.sat_axes_plot[i].set_data([0,self.sat_axes[i,0]],[0,self.sat_axes[i,1]])
             self.artists.sat_axes_plot[i].set_3d_properties([0,self.sat_axes[i,2]])
 
@@ -213,7 +224,7 @@ class Animate:
         self.artists.sat_trace_plot.set_3d_properties(self.sat_trace[:,2])
         t = self.controller.t
         self.wheel_speed_plot.set_xlim([0, max(t,1)])
-        self.wheel_speed_plot.set_ylim([-9000,9000]) 
+        self.wheel_speed_plot.set_ylim([-10000,10000]) 
         if t>0:
             self.wheel1.set_data(np.linspace(0,t,len(self.controller.wheel_speeds)),self.controller.wheel_speeds[:,0])
             self.wheel2.set_data(np.linspace(0,t,len(self.controller.wheel_speeds)),self.controller.wheel_speeds[:,1])
@@ -233,9 +244,9 @@ class Animate:
         return [self.orbit_ax, self.bod_ax]
     
     def calc_angle_err(self):
-        sat2vol = np.array(self.volcano_pos) - np.array(self.sat_pos)
+        sat2vol = np.array(self.volcano_pos)
         #self.orbit_ax.plot([0,self.volcano_pos[0]],[0,self.volcano_pos[1]],[0,self.volcano_pos[2]])
-        sat2vol /= np.linalg.norm(sat2vol)
+        #sat2vol /= np.linalg.norm(sat2vol)
 
         rotated_z = self.q.rotate(np.array([0,0,1]))
         angle = np.arccos(min(np.dot(sat2vol,
@@ -243,8 +254,9 @@ class Animate:
         return angle
     
     def make_animation(self):
-        
+
         anim = animation.FuncAnimation(fig=self.orbit_fig, func=self.update_artists,
                 frames=self.frame_iter, init_func=self.init_fig, 
                 interval=1, repeat=False, blit=True)
+        plt.show()
         return anim
