@@ -1,7 +1,6 @@
 import numpy as np
 from pyquaternion import Quaternion
 from decimal import Decimal
-import sympy
 from scipy.integrate import odeint
 
 class Controller:
@@ -19,7 +18,7 @@ class Controller:
         self.axis_err_vals = np.array([0,0,0])
         self.wheel_speeds = np.array([0,0,0])
         self.max_torq = np.array([2.4e-4, 2.4e-4, 2.54e-4])
-        mass, width, depth, height, _ = body_params.values()
+        mass, width, depth, height = [body_params[key] for key in ['mass','width', 'depth', 'height']]
         A_bod = self.calc_cross_prod_mat(body_params['cm'])
         I_bod =  np.diag([1/12 * mass * (depth**2 + height**2),  1/12 *\
             mass * (depth**2 + height**2), 1/12 * mass * (depth**2 + width**2)])

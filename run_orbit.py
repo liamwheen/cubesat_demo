@@ -1,10 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from animation import Animate
 from control import Controller
 import matplotlib.pyplot as plt
 import numpy as np
 from pyquaternion import Quaternion
-
 q = Quaternion(1,0,0,0)
 bod_mass = 4 #kg
 bod_width = 0.1 #metres
@@ -56,8 +55,11 @@ att_update = 0.01
 time_sf = 10
 w0 = [0,0,0]
 q0 = [1,0,0,0]
-rate = 10 #frames/calculations per second
+rate = 18 #frames/calculations per second
 controller = Controller(rate, body_params, q0=[1,0,0,0], w0=[0,0,0])
 anim_obj = Animate(controller, time_sf, real=False)
-#my_anim = anim_obj.make_animation()
-#plt.show()
+#plt.waitforbuttonpress()
+#anim_obj.cid = anim_obj.orbit_fig.canvas.mpl_connect('button_press_event', anim_obj.onclick)
+#anim_obj.get_point()
+my_anim = anim_obj.make_animation()
+plt.show()
