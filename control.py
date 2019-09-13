@@ -67,7 +67,7 @@ class Controller:
         #torq = np.maximum(-self.max_torq,torq)
         #print(torq)
         self.wheel_speeds = np.vstack((self.wheel_speeds,
-            2e5*np.array(self.w_cur)))
+            2e3*np.array(self.w_cur)))
         return torq
 
     def solve_step(self, torq, q0, w0):

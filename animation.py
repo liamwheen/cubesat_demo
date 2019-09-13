@@ -7,7 +7,7 @@ from pyquaternion import Quaternion
 from control import Controller
 from matplotlib import rc
 #rc('text', usetex=True)
-rc('font',size=6)
+#rc('font',size=6)
 
 class Animate:
 
@@ -27,7 +27,7 @@ class Animate:
         self.sat_axes = self.sat_scale*np.diag([2,2,6])
         self.sat_axes = self.sat_scale*np.array([0,0,30])
         self.centre_sat_axes = self.sat_axes
-        self.orbit_fig = plt.figure(figsize=(3,3))
+        self.orbit_fig = plt.figure(figsize=(9,9))
         self.orbit_ax = p3.Axes3D(self.orbit_fig)
         self.orbit_ax.set_xlim3d([-1,1])
         self.orbit_ax.set_ylim3d([-1,1])
@@ -52,7 +52,7 @@ class Animate:
         self.err_ax.grid(True,'major','y')
         self.err_plot, self.cont_err_plot = self.err_ax.plot([],[],[],[],alpha=0.6)
         self.err_vals = []
-        #self.err_ax.set_xticklabels([''])
+        self.err_ax.set_xticklabels([''])
         #self.err_ax.set_yticklabels([''])
         self.cont_err_vals = []
 
@@ -185,7 +185,7 @@ class Animate:
         while True:
             connection_id = self.orbit_fig.canvas.mpl_connect('button_press_event', self.onclick)
             self.q  = self.controller.update()
-            self.tau = self.controller.torq*12000*self.sat_scale
+            self.tau = self.controller.torq*15000*self.sat_scale
             ang_err = 0.5*(self.calc_angle_err()+self.controller.q_move.angle)
             self.err_vals += [ang_err]
             ang_err = self.controller.q_move.angle
@@ -220,19 +220,20 @@ class Animate:
         self.artists.sat_trace_plot.set_data(self.sat_trace[:,0],self.sat_trace[:,1])
         self.artists.sat_trace_plot.set_3d_properties(self.sat_trace[:,2])
         t = self.controller.t
-        self.wheel_speed_plot.set_xlim([0, max(t,1)])
-        self.wheel_speed_plot.set_ylim([-10000,10000]) 
+        self.wheel_speed_plot.set_xlim([max(0,t-200), max(t,1)])
+        self.wheel_speed_plot.set_ylim([-100,100]) 
         if t>0:
-            self.wheel1.set_data(np.linspace(max(0,t-200),t,len(self.controller.wheel_speeds)),self.controller.wheel_speeds[:,0])
-            self.wheel2.set_data(np.linspace(max(0,t-200),t,len(self.controller.wheel_speeds)),self.controller.wheel_speeds[:,1])
-            self.wheel3.set_data(np.linspace(max(0,t-200),t,len(self.controller.wheel_speeds)),self.controller.wheel_speeds[:,2])
-            self.err_plot.set_data(np.linspace(max(0,t-200),t,len(self.err_vals)), 180*np.array(self.err_vals)/np.pi)
-            self.cont_err_plot.set_data(np.linspace(max(0,t-200),t,len(self.err_vals)),
-                    180*np.array(self.cont_err_vals)/np.pi)
+            self.wheel1.set_data(np.linspace(max(0,t-200),t,min(3000,len(self.controller.wheel_speeds))),self.controller.wheel_speeds[-3000:,0])
+            self.wheel2.set_data(np.linspace(max(0,t-200),t,min(3000,len(self.controller.wheel_speeds))),self.controller.wheel_speeds[-3000:,1])
+            self.wheel3.set_data(np.linspace(max(0,t-200),t,min(3000,len(self.controller.wheel_speeds))),self.controller.wheel_speeds[-3000:,2])
+            self.err_plot.set_data(np.linspace(max(0,t-200),t,min(3000,len(self.err_vals))),
+                    180*np.array(self.err_vals[-3000:])/np.pi)
+            self.cont_err_plot.set_data(np.linspace(max(0,t-200),t,min(3000,len(self.err_vals))),
+                    180*np.array(self.cont_err_vals[-3000:])/np.pi)
             self.err_plot.axes.axis([max(0,t-200), max(t,1), 0,
-                max(180*max(self.err_vals[-1000:])/np.pi,1)])
-            self.cont_err_plot.axes.axis([max(0,t-200), max(t,1), 0,
-                max(210*max(self.err_vals[len(self.err_vals)//3:])/np.pi,1)])
+                max(180*max(self.err_vals[-3000:])/np.pi,1)])
+            #self.cont_err_plot.axes.axis([max(0,t-200), max(t,1), 0,
+            #    max(210*max(self.err_vals[len(self.err_vals[-3000:])//3:])/np.pi,1)])
 
     def update_artists(self, frames):
         self.bod_ax.view_init(self.orbit_ax.elev, self.orbit_ax.azim)
