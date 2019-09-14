@@ -1,7 +1,7 @@
 # cubesat_demo
 
 To run the program:
-  python run_orbit.py
+  python3 run_orbit.py
   
 To use the program:
   Drag the sphere to your desired orientation in order to place the target for the CubeSat
